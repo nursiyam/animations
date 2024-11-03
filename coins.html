@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Recursion for Multiplication</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <h1>Recursion for Multiplication</h1>
+    <p>Click the button to move through the steps.</p>
+<p>Let's say you want to find the value of 5 coins of 10 without using multiplication. Think how this can be solved recursively.</p>
+    <canvas id="coinCanvas" width="400" height="300"></canvas>
+    <button onclick="nextStep()">Next Step</button>
+    <p id="explanation"></p>
+
+    <script>
+        // Array representing coin values (all coins have the same value, 5)
+        const coinValues = [10, 10, 10, 10, 10]; // You can change the number of coins as needed
+
+        // Setup canvas
+        const canvas = document.getElementById('coinCanvas');
+        const ctx = canvas.getContext('2d');
+        const coinRadius = 20;
+        let currentIndex = 0;
+        let totalSum = 0;
+        let returning = false; // Indicates whether we are returning from the recursive steps
+        const processedCoins = Array(coinValues.length).fill(false); // To track which coins have returned
+        const movedCoins = Array(coinValues.length).fill(false); // To track which coins have been moved to the right
+
+        // Function to draw a coin
+        function drawCoin(x, y, value, highlight = false, returned = false) {
+            ctx.beginPath();
+            ctx.arc(x, y, coinRadius, 0, Math.PI * 2);
+            if (returned) {
+                ctx.fillStyle = 'green'; // Color for returned coins
+            } else if (highlight) {
+                ctx.fillStyle = 'yellow'; // Color for the current coin being processed
+            } else {
+                ctx.fillStyle = 'gold'; // Default color for waiting coins
+            }
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = 'black';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(value, x, y);
+        }
+
+        // Function to display coins and the big square
+        function displayCoins() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (!returning) {
+                // Draw one big square around all unprocessed coins on the left
+                const unprocessedCount = coinValues.length - currentIndex;
+                if (unprocessedCount > 0) {
+                    const squareY = 50 + currentIndex * 50 - 20; // Adjust Y position to start at the current index
+                    const squareHeight = 50 * unprocessedCount; // Height of the square to cover all unprocessed coins
+                    ctx.strokeRect(75, squareY, 50, squareHeight);
+                }
+            } else {
+                // Draw one big square around coins waiting to be returned on the right, starting small and growing
+                const unreturnedCount = coinValues.length - currentIndex;
+                if (unreturnedCount > 0) {
+                    const squareY = 50 + currentIndex * 50 - 20; // Adjust Y position to start at the current index
+                    const squareHeight = 50 * unreturnedCount; // Height of the square to grow as we move up
+                    ctx.strokeRect(275, squareY, 50, squareHeight);
+                }
+            }
+
+            // Draw coins
+            for (let i = 0; i < coinValues.length; i++) {
+                if (processedCoins[i]) {
+                    // Coins that have been returned and moved to the right (green)
+                    drawCoin(300, 50 + i * 50, coinValues[i], false, true);
+                } else if (movedCoins[i]) {
+                    // Coins that have been moved to the right but not yet returned
+                    drawCoin(300, 50 + i * 50, coinValues[i]);
+                } else if (i === currentIndex && !returning) {
+                    // Current coin being processed on the way down (yellow)
+                    drawCoin(100, 50 + i * 50, coinValues[i], true);
+                } else {
+                    // Coins that are still waiting (gold) inside the big square
+                    drawCoin(100, 50 + i * 50, coinValues[i]);
+                }
+            }
+        }
+
+        // Function to move through the steps of recursion
+        function nextStep() {
+            if (!returning) {
+                if (currentIndex < coinValues.length) {
+                    // Recursive call step: highlight the current coin in yellow and move it to the right
+                    const currentCoinValue = coinValues[currentIndex];
+                    const remainingCoins = coinValues.length - currentIndex - 1;
+                    let explanationText = `Step ${currentIndex + 1}: `;
+
+                    if (remainingCoins > 0) {
+                        explanationText += `The current sum is ${currentCoinValue} + the sum of the remaining ${remainingCoins} coins.`;
+                    } else {
+                        explanationText += `The current sum is ${currentCoinValue} (base case, no more coins left).`;
+                    }
+
+                    movedCoins[currentIndex] = true; // Mark the coin to be moved to the right
+                    currentIndex++;
+                    displayCoins();
+                    document.getElementById('explanation').innerText = explanationText;
+                } else {
+                    // Reached the base case, now start returning
+                    returning = true;
+                    currentIndex = coinValues.length - 1;
+                    totalSum = coinValues[currentIndex];
+                    processedCoins[currentIndex] = true; // Mark the coin as returned and turn it green
+                    document.getElementById('explanation').innerText = `Base case reached. Now, returning with the value: ${totalSum}`;
+                    displayCoins();
+                }
+            } else {
+                if (currentIndex > 0) {
+                    // Returning step: calculate the total sum and update
+                    currentIndex--;
+                    totalSum += coinValues[currentIndex];
+                    processedCoins[currentIndex] = true; // Mark the coin as returned and turn it green
+                    displayCoins();
+                    document.getElementById('explanation').innerText = `Returning: Added ${coinValues[currentIndex]}, total value is now ${totalSum}`;
+                } else {
+                    // Final step: display the total sum
+                    document.getElementById('explanation').innerText = `Total Value: ${totalSum}`;
+                }
+            }
+        }
+
+        // Initial display of coins
+        displayCoins();
+    </script>
+</body>
+</html>
